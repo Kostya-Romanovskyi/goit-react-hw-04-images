@@ -1,44 +1,40 @@
-import { Component } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import css from './ImageGalleryItem.module.css'
 import Modal from '../Modal/Modal'
 
-// export default function ImageGalleryItem({ image, id, openModal }) {
-//     return <li onClick={openModal} className={css.ImageGalleryItem}>
-//         <img src={image} id={id} className={css.ImageGalleryItem__image} alt="" />
-//     </li >
+const ImageGalleryItem = ({ image, id, largeImage, alt }) => {
 
-// }
-class ImageGalleryItem extends Component {
-    state = {
-        showModal: false,
+    const [showModal, setShowModal] = useState(false)
+
+    const toggleModal = () => {
+        setShowModal(!showModal)
     }
 
-    toggleModal = () => {
-        this.setState(({ showModal }) => {
-            return { showModal: !showModal }
-        })
-    }
-
-    handleCloseModal = (evt) => {
+    const handleCloseModal = (evt) => {
         if (evt.currentTarget === evt.target) {
-            this.toggleModal()
+            toggleModal()
         }
     }
 
-    render() {
-        const { image, id, largeImage, alt } = this.props
-        const { showModal } = this.state
+    return (
 
-        return (
+        <li className={css.ImageGalleryItem}>
+            <img onClick={toggleModal} src={image} id={id} className={css.ImageGalleryItem__image} alt={alt} />
+            {showModal && <Modal onCloseModal={handleCloseModal} closeKeyDown={toggleModal} largeImage={largeImage} />}
+        </li >
 
-            <li className={css.ImageGalleryItem}>
-                <img onClick={this.toggleModal} src={image} id={id} className={css.ImageGalleryItem__image} alt={alt} />
-                {showModal && <Modal onCloseModal={this.handleCloseModal} closeKeyDown={this.toggleModal} largeImage={largeImage} />}
-            </li >
+    )
 
-        )
-
-    }
 }
+
+ImageGalleryItem.propTypes = {
+    image: PropTypes.string.isRequired,
+    id: PropTypes.string.isRequired,
+    largeImage: PropTypes.string.isRequired,
+    alt: PropTypes.string.isRequired,
+
+}
+
 
 export default ImageGalleryItem;

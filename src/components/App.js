@@ -1,8 +1,7 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { animateScroll } from 'react-scroll';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import PropTypes from 'prop-types';
 import css from './App.module.css';
 import Loader from './Loader/Loader';
 import Button from './Button/Button';
@@ -10,84 +9,65 @@ import ImageGallery from './ImageGallery/ImageGallery';
 import Searchbar from './Searchbar/Searchbar';
 import fetchGallery from './FetchGallery';
 
-class App extends Component {
-  state = {
-    gallery: {},
-    page: 1,
-    collection: [],
-    loading: false,
-  };
+const App = () => {
+  const [gallery, setGallery] = useState({});
+  const [collection, setCollection] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
 
-  componentDidUpdate(_, prevState) {
-    const { search, page, collection } = this.state;
-
-    if (prevState.search !== search || prevState.page !== page) {
-      this.setState({ loading: true });
-
-      fetchGallery(search, page)
-        .then(response =>
-          this.setState(prevState => {
-            return {
-              gallery: response,
-              collection: [...prevState.collection, ...response.hits],
-            };
-          })
-        )
-        .finally(() => this.setState({ loading: false }));
+  useEffect(() => {
+    if (search === '') {
+      return;
     }
 
-    if (prevState.collection !== collection && collection.length > 12) {
-      return animateScroll.scrollMore(650);
-    }
-  }
+    setLoading(true);
 
-  handleSearchSubmit = keyWords => {
-    this.setState({ search: keyWords, collection: [], page: 1 });
+    fetchGallery(search, page)
+      .then(response => {
+        setGallery(response);
+        setCollection(prevCollection => [...prevCollection, ...response.hits]);
+      })
+      .finally(() => setLoading(false));
+  }, [search, page]);
+
+  const handleSearchSubmit = keyWords => {
+    setSearch(keyWords);
+    setCollection([]);
+    setPage(1);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
+    animateScroll.scrollMore(650);
   };
 
-  render() {
-    const { loading, collection, page, gallery } = this.state;
+  return (
+    <div className={css.App}>
+      <Searchbar keyWords={handleSearchSubmit} search1={search} />
 
-    return (
-      <div className={css.App}>
-        <Searchbar keyWords={this.handleSearchSubmit} />
+      <ToastContainer
+        position="top-center"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
 
-        <ToastContainer
-          position="top-center"
-          autoClose={1000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
+      {collection && <ImageGallery collection={collection} />}
 
-        {collection && <ImageGallery collection={collection} />}
+      {loading && <Loader />}
 
-        {loading && <Loader />}
-
-        {collection.length !== 0 &&
-          page < Math.ceil(gallery.totalHits / 12) && (
-            <Button incrimentPage={this.handleLoadMore} />
-          )}
-      </div>
-    );
-  }
-}
-
-App.propTypes = {
-  keyWords: PropTypes.func.isRequired,
-  collection: PropTypes.arrayOf(PropTypes.shape({}).isRequired).isRequired,
-  incrimentPage: PropTypes.func.isRequired,
+      {collection.length !== 0 && page < Math.ceil(gallery.totalHits / 12) && (
+        <Button incrimentPage={handleLoadMore} />
+      )}
+    </div>
+  );
 };
 
 export default App;
